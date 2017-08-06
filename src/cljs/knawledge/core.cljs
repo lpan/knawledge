@@ -4,8 +4,7 @@
             [goog.history.EventType :as HistoryEventType]
             [secretary.core :as secretary]
             [knawledge.ajax :refer [load-interceptors!]]
-            [knawledge.pages.core :refer [page navbar init-router!]]
-            [ajax.core :refer [GET POST]])
+            [knawledge.pages.core :refer [page navbar init-router!]])
   (:import goog.History))
 
 ;; -------------------------
