@@ -13,9 +13,9 @@
      [:input.form-control props]]))
 
 (defn sign-up-form []
-  (let [form-state (r/atom {:email {:error nil :value ""}
-                            :password {:error nil :value ""}
-                            :password-conf {:error nil :value ""}})
+  (let [form-state (r/atom {:email {:error nil :value nil}
+                            :password {:error nil :value nil}
+                            :password-conf {:error nil :value nil}})
 
         preds {:email [["Email field cannot be empty"
                         #(not= 0 (count %))]]
@@ -48,12 +48,19 @@
 
         submit #(let [forms @form-state
                       {:keys [email password]} forms]
-                  ; check if there is any error in the state
-                  (when (empty? (->> forms
-                                     (map second)
-                                     (map first)
-                                     (map second)
-                                     (filter some?)))
+                  (when (and
+                          ; check if there is any error in the state
+                          (empty? (->> forms
+                                       (map second)
+                                       (map first)
+                                       (map second)
+                                       (filter some?)))
+                          ; check if there is any unfilled fields
+                          (empty? (->> forms
+                                       (map second)
+                                       (map second)
+                                       (map second)
+                                       (filter nil?))))
                     (POST "/api/auth" {:params {:email (:value email)
                                                 :password (:value password)}})))]
 
