@@ -2,11 +2,6 @@
   (:require [reagent.core :as r]
             [ajax.core :refer [POST]]))
 
-(defn render-error
-  [state msgs]
-  (if-not (empty? msgs)
-    (swap! state assoc-in )))
-
 ;; -------------------------
 ;; Components
 
@@ -14,7 +9,7 @@
   (let [error? (some? error)]
     [:div.form-group {:class (when error? "has-danger")}
      [:label label]
-     (if (nil? error) nil [:div.form-control-feedback error])
+     (when error? [:div.form-control-feedback error])
      [:input.form-control props]]))
 
 (defn sign-up-form []
@@ -53,6 +48,7 @@
 
         submit #(let [forms @form-state
                       {:keys [email password]} forms]
+                  ; check if there is any error in the state
                   (when (empty? (->> forms
                                      (map second)
                                      (map first)
