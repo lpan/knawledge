@@ -1,32 +1,19 @@
 (ns knawledge.pages.core
   (:require [reagent.core :as r]
             [reagent.session :as session]
-            [goog.events :as events]
-            [goog.history.EventType :as HistoryEventType]
             [secretary.core :as secretary :include-macros true]
-            [knawledge.pages.home :refer [home-page]])
-  (:import goog.History))
+            [knawledge.pages.home :refer [home-page]]
+            [knawledge.pages.sign-up :refer [sign-up-page]]))
 
 (def pages
-  {:home #'home-page})
-
-;; -------------------------
-;; History
-;; must be called after routes have been defined
-
-(defn hook-browser-navigation! []
-  (doto (History.)
-        (events/listen
-          HistoryEventType/NAVIGATE
-          (fn [event]
-              (secretary/dispatch! (.-token event))))
-        (.setEnabled true)))
+  {:home #'home-page
+   :sign-up #'sign-up-page})
 
 (defn init-router!
   []
   (do (secretary/set-config! :prefix "#")
       (secretary/defroute "/" [] (session/put! :page :home))
-      (hook-browser-navigation!)))
+      (secretary/defroute "/sign_up" [] (session/put! :page :sign-up))))
 
 ;; -------------------------
 ;; Components
@@ -48,7 +35,8 @@
         (when-not @collapsed? {:class "in"})
         [:a.navbar-brand {:href "#/"} "knawledge"]
         [:ul.nav.navbar-nav
-         [nav-link "#/" "Home" :home collapsed?]]]])))
+         [nav-link "#/" "Home" :home collapsed?]
+         [nav-link "#/sign_up" "Sign up" :sign-up collapsed?]]]])))
 
 (defn page []
   [(pages (session/get :page))])
