@@ -14,11 +14,15 @@
 
 (defn sign-up-form []
   (let [form-state (r/atom {:email {:error nil :value nil}
+                            :username {:error nil :value nil}
                             :password {:error nil :value nil}
                             :password-conf {:error nil :value nil}})
 
         preds {:email [["Email field cannot be empty"
                         #(not= 0 (count %))]]
+
+               :username [["Username cannot be empty"
+                          #(not= 0 (count %))]]
 
                :password [["Password field cannot be empty"
                            #(not= 0 (count %))]
@@ -47,7 +51,7 @@
                              (validate! k)))
 
         submit #(let [forms @form-state
-                      {:keys [email password]} forms]
+                      {:keys [email username password]} forms]
                   (when (and
                           ; check if there is any error in the state
                           (empty? (->> forms
@@ -61,21 +65,29 @@
                                        (map second)
                                        (map second)
                                        (filter nil?))))
-                    (POST "/api/auth" {:params {:email (:value email)
+                    (POST "/api/user" {:params {:email (:value email)
+                                                :username (:value username)
                                                 :password (:value password)}})))]
 
     (fn []
-      (let [{:keys [email password password-conf]} @form-state]
+      (let [{:keys [email username password password-conf]} @form-state]
         [:form.px-3
          [form-input (:error email) {:label "Email address"
                                      :type "text"
                                      :on-change (updater :email)}]
+
+         [form-input (:error username) {:label "Username"
+                                        :type "text"
+                                        :on-change (updater :username)}]
+
          [form-input (:error password) {:label "Password"
                                         :type "password"
                                         :on-change (updater :password)}]
+
          [form-input (:error password-conf) {:label "Password confirmation"
                                              :type "password"
                                              :on-change (updater :password-conf)}]
+
          [:button.btn.btn-primary.mt-1 {:on-click submit} "Sign up"]]))))
 
 (defn sign-up-page []
