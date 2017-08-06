@@ -17,34 +17,34 @@
                             :password {:error nil :value ""}
                             :password-conf {:error nil :value ""}})
 
-        updater (fn [k] #(swap! form-state assoc-in [k :value] (.. % -target -value)))
+        preds {:email [["Email field cannot be empty"
+                        #(not= 0 (count %))]]
 
-        validate! (fn [k predicates]
-                   (let [value (get-in @form-state [k :value])
-                         render-error (fn [msgs]
-                                        (if (empty? msgs)
-                                          (swap! form-state assoc-in [k :error] nil)
-                                          (swap! form-state assoc-in [k :error] (first msgs))))]
-                     (->> predicates
-                          ; filter out valid
-                          (filter (fn [[msg pred]] (not (pred value))))
-                          ; map to error message
-                          (map first)
-                          ; clear error if it is nil
-                          render-error)))
+               :password [["Password field cannot be empty"
+                           #(not= 0 (count %))]
+                          ["Password has to be at least 5 characters long"
+                           #(<= 5 (count %))]]
 
-        email-preds [["Email field cannot be empty"
-                      #(not= 0 (count %))]]
-        password-preds [["Password field cannot be empty"
-                         #(not= 0 (count %))]
-                        ["Password has to be at least 5 characters long"
-                         #(<= 5 (count %))]]
-        password-conf-preds [["Password confirmation does not match password"
-                              #(= % (get-in @form-state [:password :value]))]]
+               :password-conf [["Password confirmation does not match password"
+                                #(= % (get-in @form-state [:password :value]))]]}
 
-        validate-all! #(do (validate! :email email-preds)
-                           (validate! :password password-preds)
-                           (validate! :password-conf password-conf-preds))
+        validate! (fn [k]
+                    (let [value (get-in @form-state [k :value])
+                          predicates (get preds k)
+                          render-error (fn [msgs]
+                                         (if (empty? msgs)
+                                           (swap! form-state assoc-in [k :error] nil)
+                                           (swap! form-state assoc-in [k :error] (first msgs))))]
+                      (->> predicates
+                           ; filter out valid
+                           (filter (fn [[msg pred]] (not (pred value))))
+                           ; map to error message
+                           (map first)
+                           ; clear error if it is nil
+                           render-error)))
+
+        updater (fn [k] #(do (swap! form-state assoc-in [k :value] (.. % -target -value))
+                             (validate! k)))
 
         submit #(let [forms @form-state
                       {:keys [email password]} forms]
@@ -59,8 +59,6 @@
 
     (fn []
       (let [{:keys [email password password-conf]} @form-state]
-        (validate-all!)
-
         [:form.px-3
          [form-input (:error email) {:label "Email address"
                                      :type "text"
