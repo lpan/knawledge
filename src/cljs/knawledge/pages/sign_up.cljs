@@ -1,5 +1,6 @@
 (ns knawledge.pages.sign-up
-  (:require [reagent.core :as r]))
+  (:require [reagent.core :as r]
+            [ajax.core :refer [POST]]))
 
 (defn render-error
   [state msgs]
@@ -10,10 +11,11 @@
 ;; Components
 
 (defn form-input [error {:keys [label] :as props}]
-  [:div.form-group
-   [:label label]
-   (if (nil? error) nil [:div.form-control-feedback error])
-   [:input.form-control props]])
+  (let [error? (some? error)]
+    [:div.form-group {:class (when error? "has-danger")}
+     [:label label]
+     (if (nil? error) nil [:div.form-control-feedback error])
+     [:input.form-control props]]))
 
 (defn sign-up-form []
   (let [form-state (r/atom {:email {:error nil :value ""}
@@ -22,7 +24,7 @@
 
         updater (fn [k] #(swap! form-state assoc-in [k :value] (.. % -target -value)))
 
-        validate (fn [k predicates]
+        validate! (fn [k predicates]
                    (let [value (get-in @form-state [k :value])
                          render-error (fn [msgs]
                                         (if (empty? msgs)
@@ -37,19 +39,32 @@
                           render-error)))
 
         email-preds [["Email field cannot be empty"
-                      #(some? %)]]
+                      #(not= 0 (count %))]]
         password-preds [["Password field cannot be empty"
-                         #(some? %)]
+                         #(not= 0 (count %))]
                         ["Password has to be at least 5 characters long"
                          #(<= 5 (count %))]]
         password-conf-preds [["Password confirmation does not match password"
-                              #(= % (get-in @form-state [:password :value]))]]]
+                              #(= % (get-in @form-state [:password :value]))]]
+
+        validate-all! #(do (validate! :email email-preds)
+                           (validate! :password password-preds)
+                           (validate! :password-conf password-conf-preds))
+
+        submit #(let [forms @form-state
+                      {:keys [email password]} forms]
+                  (when (empty? (->> forms
+                                     (map second)
+                                     (map first)
+                                     (map second)
+                                     (filter some?)))
+                    (POST "/api/auth" {:params {:email (:value email)
+                                                :password (:value password)}})))]
 
     (fn []
       (let [{:keys [email password password-conf]} @form-state]
-        (validate :email email-preds)
-        (validate :password password-preds)
-        (validate :password-conf password-conf-preds)
+        (validate-all!)
+
         [:form.px-3
          [form-input (:error email) {:label "Email address"
                                      :type "text"
@@ -60,7 +75,7 @@
          [form-input (:error password-conf) {:label "Password confirmation"
                                              :type "password"
                                              :on-change (updater :password-conf)}]
-         [:button.btn.btn-primary.mt-1 "Sign up"]]))))
+         [:button.btn.btn-primary.mt-1 {:on-click submit} "Sign up"]]))))
 
 (defn sign-up-page []
   [:div.container.mt-2
