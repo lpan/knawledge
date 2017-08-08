@@ -1,6 +1,6 @@
 CREATE TABLE users
 (id VARCHAR(20) PRIMARY KEY,
- user_name VARCHAR(30) NOT NULL,
+ username VARCHAR(30) NOT NULL,
  email VARCHAR(30) NOT NULL,
  last_login TIME,
  pass VARCHAR(300) NOT NULL);
