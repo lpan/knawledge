@@ -1,6 +1,7 @@
 (ns knawledge.pages.sign-up
   (:require [reagent.core :as r]
-            [ajax.core :refer [POST]]))
+            [ajax.core :refer [POST]]
+            [knawledge.ajax :refer [default-headers]]))
 
 ;; -------------------------
 ;; Components
@@ -65,9 +66,9 @@
                                        (map second)
                                        (map second)
                                        (filter nil?))))
-                    (POST "/api/user" {:params {:email (:value email)
-                                                :username (:value username)
-                                                :password (:value password)}})))]
+                    (POST "/api/user" (default-headers {:params {:email (:value email)
+                                                                 :username (:value username)
+                                                                 :password (:value password)}}))))]
 
     (fn []
       (let [{:keys [email username password password-conf]} @form-state]
