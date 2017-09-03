@@ -9,6 +9,11 @@ VALUES (:id, :username, :email, :pass)
 SELECT * FROM users
 WHERE id = :id
 
+-- :name get-users :? :n
+-- :doc retrieve users that satisfy the given key value pair.
+SELECT * FROM users
+WHERE email = :email
+
 -- :name delete-user! :! :n
 -- :doc delete a user given the id
 DELETE FROM users
